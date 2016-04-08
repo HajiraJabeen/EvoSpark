@@ -8,6 +8,8 @@ object PsoSpark {
   var gbest: PSOParticle = new PSOParticle()
   var tbest: PSOParticle = new PSOParticle()
 
+  
+  
 
   class PSOParticle() {
     //FlatMapFunction[(PSOParticle), (PSOParticle) ]{
