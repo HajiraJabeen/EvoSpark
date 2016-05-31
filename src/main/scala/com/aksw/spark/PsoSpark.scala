@@ -1,8 +1,9 @@
 package com.aksw.spark
 
+import breeze.linalg.DenseVector
 import org.apache.spark.mllib.linalg.{Vector => SVector}
 import org.apache.spark.mllib.linalg.{Vectors => SVectors}
-import org.apache.spark.SparkContext
+import org.apache.spark.{SparkConf, SparkContext}
 
 import scala.math.Ordering
 import scala.util.Random
@@ -20,7 +21,7 @@ object PsoSpark {
     var gbest = PSOParticle.random(dim)
     var gbestBC = sc.broadcast(gbest)
 
-    for (i <- (1 to iter)) {
+    for (i <- 1 to iter) {
       population = population.map(x => x.update(gbestBC.value))
       gbest = population.min()(Ordering.by(x => x.fit))
       gbestBC = sc.broadcast(gbest)
@@ -30,14 +31,14 @@ object PsoSpark {
   }
 }
 
-case class PSOParticle(val dimension: Int,
-                       val fit: Double,
-                       val bestFit: Double,
-                       val position: SVector[Double],
-                       val velocity: SVector[Double],
-                       val bestPosition: SVector[Double]) {
+case class PSOParticle(dimension: Int,
+                       fit: Double,
+                       bestFit: Double,
+                       position: SVector,
+                       velocity: SVector,
+                       bestPosition: SVector) {
 
-  override def toString = s"PSOParticle(dimension=$dimension, pfit=$pfit, fit=$fit, position=$position, velocity=$velocity, pbest=$pbest)"
+  override def toString = s"PSOParticle(dimension=$dimension, fit=$fit, bestFit=$bestFit, position=$position, velocity=$velocity, bestPosition=$bestPosition)"
 
   def update(gBest: PSOParticle): PSOParticle = {
     val newFit = position.toArray.map(x => x * x).sum
@@ -46,7 +47,7 @@ case class PSOParticle(val dimension: Int,
 
     if (bestFit > newFit) {
       newBestFit = newFit
-      newBestPosition = position.copy()
+      newBestPosition = position.copy
     }
 
     val c1 = 1.49618
@@ -61,16 +62,20 @@ case class PSOParticle(val dimension: Int,
     val newVel = W * vel + (Random.nextDouble() * c1 * (gBestPos - pos))
     val newPos = vel + pos
 
-    this.copy(fit = newFit, bestFit = newBestFit, position = newPos, velocity = newVel, bestPosition = newBestPosition)
+    this.copy(fit = newFit,
+      bestFit = newBestFit,
+      position = SVectors.dense(newPos.toArray),
+      velocity = SVectors.dense(newVel.toArray),
+      bestPosition = SVectors.dense(newBestPosition.toArray))
   }
 }
 
 object PSOParticle {
   def random(dimension: Int): PSOParticle = {
     new PSOParticle(dimension, Double.PositiveInfinity, Double.PositiveInfinity,
-      SVectors.dense(Array.fill(dim)(Random.nextDouble)),
-      SVectors.dense(Array.fill(dim)(Random.nextDouble)),
-      SVectors.dense(Array.fill(dim)(Random.nextDouble)))
+      SVectors.dense(Array.fill(dimension)(Random.nextDouble)),
+      SVectors.dense(Array.fill(dimension)(Random.nextDouble)),
+      SVectors.dense(Array.fill(dimension)(Random.nextDouble)))
   }
 
 }
