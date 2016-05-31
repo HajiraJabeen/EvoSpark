@@ -54,14 +54,17 @@ case class PSOParticle(dimension: Int,
     val c2 = 1.49618
     val W = 0.7298
 
+    // convert Spark Vectors to breeze.linalg DenseVectors
     val vel = new DenseVector(velocity.toArray)
     val pos = new DenseVector(velocity.toArray)
     val gBestPos = new DenseVector(gBest.position.toArray)
     val bestPos = new DenseVector(bestPosition.toArray)
 
+    // use breeze DSL to perform the vector ops
     val newVel = W * vel + (Random.nextDouble() * c1 * (gBestPos - pos))
     val newPos = vel + pos
 
+    // return updated particle
     this.copy(fit = newFit,
       bestFit = newBestFit,
       position = SVectors.dense(newPos.toArray),
